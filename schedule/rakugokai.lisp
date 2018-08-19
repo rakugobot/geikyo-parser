@@ -20,7 +20,7 @@
           for i from 0 below (length rows)
           for (th td) = (aref rows i)
           for rowspan = (and (plump:node-p (aref th 0)) (plump:get-attribute (aref th 0) "rowspan"))
-          for key = (aref (render-text th) 0)
+          for key = ($1 th (render-text))
           when (stringp key)
           collect (cons key
                         (cond
@@ -40,4 +40,4 @@
                              ($ td "ul li" (render-text)))
                             'list))
                           (t
-                           (aref (render-text td) 0)))))))
+                           ($1 td (render-text))))))))

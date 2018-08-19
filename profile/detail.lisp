@@ -2,10 +2,6 @@
   (:use #:cl
         #:geikyo-parser/utils
         #:lquery)
-  (:import-from #:lquery-funcs
-                #:render-text
-                #:text
-                #:attr)
   (:import-from #:quri)
   (:import-from #:str
                 #:trim)
@@ -42,21 +38,21 @@
             ($ profile "dl"
               (combine "dt" "dd")
               (map-apply (lambda (dt dd)
-                           (cons (aref (render-text dt) 0)
-                                 (trim (aref (text dd) 0)))))))
+                           (cons ($1 dt (render-text))
+                                 (trim ($1 dd (text))))))))
           (jyoseki-schedules ($ jyoseki-schedules "li"
                                (combine "span" "a" "a:nth-child(2)")
                                (map-apply (lambda (span a title)
-                                            (let ((title (aref (render-text title) 0)))
+                                            (let ((title ($1 title (render-text))))
                                               (nconc
                                                (%parse-jyoseki-title title)
-                                               `(("venue" . ,(aref (render-text span) 0))
+                                               `(("venue" . ,($1 span (render-text)))
                                                  ("uri" . ,(merge-uris ($1 a (attr "href")) *base-uri*)))))))))
           (rakugokai-schedules ($ rakugokai-schedules "li"
                                  (combine "em" "img" "span" "a")
                                  (map-apply (lambda (em img span a)
-                                              `(,@(%parse-rakugokai-date (aref (render-text em) 0))
-                                                ("title" . ,(render-text (aref span 0)))
+                                              `(,@(%parse-rakugokai-date ($1 em (render-text)))
+                                                ("title" . ,($1 span (render-text)))
                                                 ("category" . ,($1 img (attr "alt")))
                                                 ("uri" . ,(merge-uris ($1 a (attr "href")) *base-uri*))))))))
       (nconc (coerce profile 'list)

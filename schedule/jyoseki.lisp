@@ -3,7 +3,6 @@
         #:geikyo-parser/utils
         #:lquery)
   (:import-from #:lquery-funcs
-                #:attr
                 #:render-text)
   (:import-from #:quri)
   (:import-from #:plump)
@@ -18,7 +17,6 @@
                      (error "#JyosekTtl is missing")))
          (day ($1 header ".day"))
          (hall ($1 header "a" (text)))
-         (year (nth-value 5 (decode-universal-time (get-universal-time))))
          (default-month (nth-value 4 (decode-universal-time (get-universal-time)))))
     (ppcre:register-groups-bind (title (#'parse-integer month start-day end-day))
         ("^((?:..?)月(?:..?)席.*)\\s*(?:(\\d{1,2})月)?(\\d{1,2})(?:〜(\\d{1,2}))?日"
@@ -26,10 +24,14 @@
       `(("venue" . ,hall)
         ("title" . ,title)
         ("date-from" . ,(format nil "~D-~2,'0D-~2,'0D"
-                                year (or month default-month) start-day))
+                                (get-year-of-month (or month default-month))
+                                (or month default-month)
+                                start-day))
         ,@(and end-day
                `(("date-to" . ,(format nil "~D-~2,'0D-~2,'0D"
-                                       year (or month default-month) end-day))))))))
+                                       (get-year-of-month (or month default-month))
+                                       (or month default-month)
+                                       end-day))))))))
 
 (defun parse-jyoseki (body)
   (let* ((main ($1 (initialize body) "#MainCont"))
