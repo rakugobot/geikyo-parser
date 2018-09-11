@@ -16,7 +16,7 @@
   (or (ppcre:register-groups-bind (title (#'parse-integer month start-day end-day))
           ("^((?:..?)月(?:..?)席(?:[　)) ]+?(?:前半|後半))?)\\s*(\\d{1,2})月(\\d{1,2})日〜(\\d{1,2})日"
            link-title)
-        (let ((year (nth-value 5 (decode-universal-time (get-universal-time)))))
+        (let ((year (get-year-of-month month)))
           `(("title" . ,title)
             ("date-from" . ,(format nil "~D-~2,'0D-~2,'0D" year month start-day))
             ("date-to" . ,(format nil "~D-~2,'0D-~2,'0D" year month end-day)))))

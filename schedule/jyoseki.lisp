@@ -1,11 +1,14 @@
 (defpackage #:geikyo-parser/schedule/jyoseki
   (:use #:cl
         #:geikyo-parser/utils
+        #:rakugobot-utils
         #:lquery)
   (:import-from #:lquery-funcs
                 #:render-text)
   (:import-from #:quri)
   (:import-from #:plump)
+  (:import-from #:assoc-utils
+                #:aget)
   (:export #:parse-jyoseki))
 (in-package #:geikyo-parser/schedule/jyoseki)
 
@@ -22,7 +25,7 @@
         ("^((?:..?)月(?:..?)席.*)\\s*(?:(\\d{1,2})月)?(\\d{1,2})(?:〜(\\d{1,2}))?日"
          (plump:text day))
       `(("venue" . ,hall)
-        ("title" . ,title)
+        ("title" . ,(format nil "~A ~A" hall title))
         ("date-from" . ,(format nil "~D-~2,'0D-~2,'0D"
                                 (get-year-of-month (or month default-month))
                                 (or month default-month)
@@ -33,7 +36,7 @@
                                        (or month default-month)
                                        end-day))))))))
 
-(defun parse-jyoseki (body)
+(defun %parse-jyoseki-html (body)
   (let* ((main ($1 (initialize body) "#MainCont"))
          (tables ($ main "table")))
     (assert main)
@@ -63,3 +66,16 @@
                                                                        ,@(and href
                                                                               `(("uri" . ,(merge-uris href *base-uri*)))))))))))
                                           'list)))))))))))
+
+(defun parse-jyoseki (body)
+  (let ((res (%parse-jyoseki-html body)))
+    (loop for table in (aget res "tables")
+          collect (let ((hall (normalize-hall-name (aget res "venue"))))
+                    `(("title" . ,(format nil "~A ~A" (aget res "title") (aget table "subtitle")))
+                      ("start-date" . ,(aget res "date-from"))
+                      ("end-date" . ,(aget res "date-to"))
+                      ("start-time" . ,(aget table "time-from"))
+                      ("end-time" . ,(aget table "time-to"))
+                      ("place" . ,hall)
+                      ("address" . ,(hall-address hall))
+                      ("performers" . ,(aget table "performers")))))))
